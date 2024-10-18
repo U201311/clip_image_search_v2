@@ -8,48 +8,27 @@ from pymongo import MongoClient, ReadPreference
 
 
 class MongoDB:
-    def __init__(self, host: str, port: int, database: str, collection: str):
-        self.host = host
-        self.port = port
-        self.database = database
-        self.collection_name = collection
-        self.mongodb_url = f"mongodb://{self.host}:{self.port}"
-        self.username = settings.mongodb_username
-        self.password = settings.mongodb_password
-        self.client = None
+    def __init__(self):
+        self.mongodb_url = settings.mongodb_url
+        self.client = None 
         self.db = None
-    
-
-    def get_collection(self): 
-        if not self.client:
-            self.connect()
-        self.collection = self.client[self.database][self.collection_name]
-        return self.collection
-
-    
-    
-    def insert_one(self, data):
-        self.collection.insert_one(data)
-
 
     def connect(self):
-        try:
-            if self.username and self.password:
-                self.client = MongoClient(self.mongodb_url, username=self.username, password=self.password)
-            else:
-                self.client = MongoClient(self.mongodb_url)
-                
-            self.client.admin.command('ismaster')
-            
-            # 判断collection是否存在, 不存在则创建 
-            if self.collection_name not in self.client[self.database].list_collection_names():
-                self.client[self.database][self.collection_name].create_index("id", name="feature_index")
-            
-            logger.info("Successfully connected to MongoDB")
-        except ConnectionFailure as e:
-            logger.error(f"Failed to connect to MongoDB: {str(e)}")
-            raise
+        if not self.client:
+            try:
+                self.client = MongoClient(self.mongodb_url, 
+                    username=settings.mongodb_username,
+                    password=settings.mongodb_password,
+                    authSource=settings.mongodb_authsource,
+                    read_preference=ReadPreference.PRIMARY)
+                self.db = self.client[settings.mongodb_database]
+                logger.info("MongoDB connection established")
+            except Exception as e:
+                logger.error(f"MongoDB connection error: {e}")
+                raise ConnectionFailure("MongoDB connection error")
 
+
+    
 
     def close(self):
         if self.client:
@@ -57,7 +36,7 @@ class MongoDB:
             self.client = None
             self.db = None
             logger.info("MongoDB connection closed")
-
+        
 
     def __aenter__(self):
         self.connect()
@@ -79,15 +58,3 @@ if __name__ == "__main__":
     new_collection = mongo.client[settings.mongodb_database][new_collection_name]
 
     
-
-    # async def test_connection():
-    #     mongo = MongoDB(
-    #         settings.mongodb_host, 
-    #         settings.mongodb_port, 
-    #         settings.mongodb_database, 
-    #         settings.mongodb_collection
-    #     )
-    #     await mongo.connect()
-    #     await mongo.close()
-
-    # asyncio.run(test_connection())

@@ -48,3 +48,4 @@ dmypy.json
 *.swo
 
 # Ignore .pt files 
+models/*.pt

@@ -8,15 +8,18 @@ from utils.logger import logger
 from service.server import SearchServer
 from models.clip_model import get_model
 from typing import Union, List
+from service.data_workspace_detail_service import find
 import ast
+import asyncio
+import os
+from utils.client import MongoDBClient
+from concurrent.futures import ThreadPoolExecutor
+
 import io 
 
 
 router = APIRouter() 
-db = MongoDB(settings.mongodb_host, settings.mongodb_port, settings.mongodb_database, settings.mongodb_collection)
-client = db.client
-collection = db.get_collection()
-
+collection = MongoDBClient(settings.mongodb_collection)
 model = get_model()
 server = SearchServer(collection, model)
 
@@ -66,28 +69,37 @@ def search_image(request: SearchImageRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-class ImportDirRequest(BaseModel):
-    data_url: str
+class ImportResponse(BaseModel):
+    success: bool
+    data: List[str]
 
 
-@router.post("/image_dir/")
-async def upload_data(request: ImportDirRequest):
+@router.post("/import/{workspace_id}")
+async def upload_data(workspace_id: int):
     """
-    Import images from a directory to the database
-
+    import data from workspace to database
     args:
-    data_url: str: The path to the directory containing the images
+
+    workspace_id: 
 
     return:
     success: bool: True if the data was uploaded successfully
     data: list of str: The list of inserted_id of the images
     """
+    workspace_id = workspace_id
+    if workspace_id is None:
+        raise HTTPException(status_code=400, detail="Workspace ID is required") 
     try:
-        result  =  await server.import_image_dir(request.data_url, model, copy=False)
-        logger.info(f"Data uploaded successfully")
-        return {"success": True, "data": result}
+        id_list, file_path_list = find(workspace_id)
+        results = await server.import_image_dir(id_list, file_path_list, model, copy=False)
+        return results
+                
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+    
+
+   
+
 
 
 @router.post("/text/")
