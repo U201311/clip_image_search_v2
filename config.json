@@ -4,6 +4,7 @@
     "mongodb-database": "data_copilot",
     "mongodb-collection": "search_datas",
 
+    "mongodb-generate-dataset": "",
     "mongodb-username": "admin",
     "mongodb-password": "admin123",
 
