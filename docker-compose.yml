@@ -1,0 +1,22 @@
+version: '3'
+services:
+  db:
+    image: mongo
+    container_name: mongodb
+    volumes:
+      - mongodb_data:/data/db
+  app:
+    build: .
+    environment:
+      - MONGODB_HOST=db
+      - MONGODB_PORT=27017
+      - MONGODB_DATABASE=db
+      - MONGODB_COLLECTION=images
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+    volumes:
+      - /Users/d-robotics/Downloads/test_dat_for_clip:/Users/d-robotics/Downloads/test_dat_for_clip
+volumes:
+  mongodb_data:

@@ -1,0 +1,11 @@
+ftfy
+regex
+tqdm
+numpy==1.21.6
+pandas==1.3.5
+torch
+pydantic_settings
+torchvision
+motor
+fastapi_socketio
+git+https://github.com/openai/CLIP.git 

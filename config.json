@@ -1,0 +1,25 @@
+{
+    "mongodb-host": "10.112.20.37",
+    "mongodb-port": 9004,
+    "mongodb-database": "data_copilot",
+    "mongodb-collection": "search_datas",
+
+    "mongodb-username": "admin",
+    "mongodb-password": "admin123",
+
+
+    "device": "cpu",
+    "storage-type": "float32",
+
+    "clip-model": "ViT-B/32",
+    "clip-model-download": "./models",
+    "import-image-base": "./data",
+
+    "enable-ocr": false,
+    "ocr-det-model": "ch_PP-OCRv3_det_infer",
+    "ocr-rec-model": "ch_PP-OCRv3_rec_infer",
+    "ocr-model-download": "./models",
+
+    "log-level": "info",
+    "log-file": "./logs/app.log"
+}
