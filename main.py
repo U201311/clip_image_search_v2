@@ -17,7 +17,7 @@ from routers import search
 
 
 def lifespan(app: FastAPI):
-    app.state.db = MongoDB(settings.mongodb_host, settings.mongodb_port, settings.mongodb_database, settings.mongodb_collection)
+    app.state.db = MongoDB()
     # start to load clip model 
     app.state.model = get_model()
 

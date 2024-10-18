@@ -44,7 +44,7 @@ class SearchServer:
         try:
             for doc in cursor:  
                 feature_list.append(np.frombuffer(doc["feature"], settings.storage_type))
-                filename_list.append(doc["filename"])
+                filename_list.append(doc["_id"])
                 if len(feature_list) >= self._MAX_SPLIT_SIZE:
                     feature_list = np.array(feature_list)
                     sim_score_list.append(cosine_similarity(query_feature, feature_list))
@@ -87,70 +87,36 @@ class SearchServer:
 
         return filename_list, score_list
     
-    def _import_image_dir_sync(self, filename:str, model: CLIPModel, copy=False):
-        logger.info(f"Importing image: {filename}") 
-        filename = os.path.abspath(filename)
-        filetype = get_file_type(filename)
-        logger.info(f"File type: {filetype}") 
-        if filetype is None:
-            logger.info(f"skip file: {filename}")
-            return 
+    def import_image_dir_sync(self, id, filename: str, model: CLIPModel, copy=False):
+        logger.info(f"Importing image: {filename}")
         
-        image_feature, image_size = model.get_image_feature(filename) 
+        
+        image_feature, image_size = model.get_image_feature(filename)
+        logger.info(f"Image size: {image_size}")
         if image_feature is None:
             logger.info(f"skip file: {filename}")
-            return 
-        image_feature = image_feature.astype(settings.storage_type) 
+            return
 
-        if copy:
-            md5hash = calc_md5(filename)
-            new_basename = md5hash + '.' + filetype
-            new_full_path = get_full_path(settings.import_image_base, new_basename)
-
-            if os.path.isfile(new_full_path):
-                print("duplicate file:", filename)
-                return
-
-            shutil.copy2(filename, new_full_path)
-            stat = os.stat(new_full_path)
-        else:
-            stat = os.stat(filename)
-            new_full_path = filename
-
-        image_mtime = datetime.fromtimestamp(stat.st_mtime)
-
-
-        image_datestr = image_mtime.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
-        # save to mongodb
+        # 这里可以添加将图像特征保存到数据库的逻辑
         document = {
-            'filename': new_full_path,
-            'extension': filetype,
-            'height': image_size[1],
-            'width': image_size[0],
-            'filesize': stat.st_size,
-            'create_time': image_datestr,
-            'status': 1,
-            'feature': image_feature.tobytes(),
+            "file_id": id,
+            "height": image_size[0],
+            "width": image_size[1],
+            "feature": image_feature.tolist(),  # 假设 image_feature 是一个 numpy 数组
+            "status":1,
+            "created_time": datetime.now(),
         }
-
-
-        
-        insert_result  = self.mongo_collection.insert_one(document)
-        logger.info(f"Inserted image: {filename}")
-        return str(insert_result.inserted_id)
-        
+        self.collection.insert_one(document)
+        logger.info(f"Image imported: {filename}")
     
 
-    async def import_image_dir(self, image_dir, model: CLIPModel, copy=False):
+    async def import_image_dir(self, id_list, file_path_list, model: CLIPModel, copy=False):
         loop = asyncio.get_event_loop()
         with ThreadPoolExecutor() as pool:
             tasks = []
-            for root, _, files in os.walk(image_dir):
-                for file in files:
-                    image_path = os.path.join(root, file)
-                    tasks.append(loop.run_in_executor(pool, self._import_image_dir_sync, image_path, model, copy))
-            
-            # 等待所有任务完成
+            for id, file_path in zip(id_list, file_path_list):
+                file_path = os.path.join(settings.import_image_base, file_path)
+                tasks.append(loop.run_in_executor(pool, self.import_image_dir_sync, id, file_path, model, copy))
             results = await asyncio.gather(*tasks)
         return results
 

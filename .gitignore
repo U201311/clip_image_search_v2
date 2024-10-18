@@ -46,3 +46,6 @@ dmypy.json
 *.temp
 *.swp
 *.swo
+
+# Ignore .pt files 
+models/*.pt
