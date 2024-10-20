@@ -9,6 +9,7 @@ from pymongo import MongoClient, ReadPreference
 
 class MongoDB:
     def __init__(self):
+        logger.info(f"MongoDB init {settings.mongodb_url}")
         self.mongodb_url = settings.mongodb_url
         self.client = None 
         self.db = None
@@ -46,15 +47,16 @@ class MongoDB:
         self.close()
 
 if __name__ == "__main__":
+    mongo = MongoDB()
 
-    mongo = MongoDB(
-        settings.mongodb_host, 
-        settings.mongodb_port, 
-        settings.mongodb_database, 
-        settings.mongodb_collection
-    )
-    mongo.connect() 
-    new_collection_name = "dataset_files"
-    new_collection = mongo.client[settings.mongodb_database][new_collection_name]
+    # mongo = MongoDB(
+    #     settings.mongodb_host, 
+    #     settings.mongodb_port, 
+    #     settings.mongodb_database, 
+    #     settings.mongodb_collection
+    # )
+    # mongo.connect() 
+    # new_collection_name = "dataset_files"
+    # new_collection = mongo.client[settings.mongodb_database][new_collection_name]
 
     

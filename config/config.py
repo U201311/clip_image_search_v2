@@ -11,16 +11,14 @@ class Settings(BaseSettings):
     mongodb_port: int = Field(default=27017, alias="mongodb-port")
     mongodb_database: str = Field(default="db", alias="mongodb-database")
     mongodb_collection: str = Field(default="images", alias="mongodb-collection")
-    mongodb_url: str = Field(default="http://localhost:27017", alias="mongodb-url")
+    # mongodb_url: str = Field(default="http://localhost:27017", alias="mongodb-url")
+    mongodb_url: str = Field(default="http://localhost:27017", env=" MONGODB_URL")
 
     mongodb_authsource: str = Field(default="admin", alias="mongodb-authsource")
-
-
-    
     mongodb_username: str = Field(default=None, alias="mongodb-username")
     mongodb_password: str = Field(default=None, alias="mongodb-password")
 
-    root_path: str = Field(default="./data", alias="root-path")
+    root_path: str = Field(default="./data", env="ROOT_PATH")
     # 设备配置
     device: str = Field(default="cpu", alias="device")
     storage_type: str = Field(default="float32", alias="storage-type")

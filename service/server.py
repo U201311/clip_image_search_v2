@@ -11,6 +11,7 @@ from config.config import settings
 from models.model_utils import get_feature_size, cosine_similarity, get_file_type
 from models.clip_model import get_model, CLIPModel
 from utils.utils import calc_md5, get_full_path
+from service import dataset_files_service 
 
 
 
@@ -30,13 +31,16 @@ class SearchServer:
             ret['width'] = {'$gte': int(args['minimum_width'])}
         if 'minimum_height' in args:
             ret['height'] = {'$gte': int(args['minimum_height'])}
-        if 'extension_choice' in args and len(args['extension_choice']) > 0:
-            ret['extension'] = {'$in': args['extension_choice']}
+        # if 'extension_choice' in args and len(args['extension_choice']) > 0:
+        #     ret['extension'] = {'$in': args['extension_choice']}
         return ret
     
-    def search_nearest_clip_feature(self, query_feature, topn=20, search_filter_options={}):
+    def search_nearest_clip_feature(self, query_feature, dataset_id, topn=20, search_filter_options={}):
         logger.info(f"search_filter_options: {search_filter_options}")
         mongo_query_dict = self._get_search_filter(search_filter_options)
+        id_list = dataset_files_service.find(dataset_id)
+        if id_list:
+            mongo_query_dict["file_id"] = {"$in": id_list}
         cursor = self.mongo_collection.find(mongo_query_dict)
         filename_list = []
         feature_list = []
@@ -66,7 +70,7 @@ class SearchServer:
         return top_n_filename, top_n_score
     
 
-    def search_image(self, query, topn, minimum_width, minimum_height, extension_choice):
+    def search_image(self, query, dataset_id, topn, minimum_width, minimum_height, extension_choice):
         with torch.no_grad():
             if isinstance(query, str):
                 target_feature = self.model.get_text_feature(query) 
@@ -83,9 +87,10 @@ class SearchServer:
             "extension_choice": extension_choice,
         }
 
-        filename_list, score_list = self.search_nearest_clip_feature(target_feature, topn=int(topn), search_filter_options=search_option)
+        filename_list, score_list = self.search_nearest_clip_feature(target_feature, dataset_id, topn=int(topn), search_filter_options=search_option)
 
         return filename_list, score_list
+    
     
     def import_image_dir_sync(self, id, filename: str, model: CLIPModel, copy=False):
         logger.info(f"Importing image: {filename}")

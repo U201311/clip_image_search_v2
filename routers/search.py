@@ -33,6 +33,7 @@ class SearchImageRequest(BaseModel):
 
 
 class SearchTextRequest(BaseModel):
+    dataset_id: int
     text: str
     topn: int = 10
     minimum_width: int = 0
@@ -113,3 +114,15 @@ def search_text(request: SearchTextRequest):
         return {"success": True, "data": result}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+    
+
+def search_text_by_id(request: SearchTextRequest):
+    """
+    Search for images based on the text
+
+    """
+    try:
+        result =  server.search_image(request.text, request.dataset_id, topn=request.topn, minimum_width=request.minimum_width, minimum_height=request.minimum_height, extension_choice=request.extension_choice)
+        return {"success": True, "data": result}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e)) 

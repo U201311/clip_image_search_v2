@@ -14,12 +14,15 @@ from models.clip_model import get_model
 from database.mongodb import MongoDB   
 from service.server import SearchServer
 from routers import search
+from utils.logger import logger
 
+#     "mongodb-url": "mongodb://10.112.20.37:9004",
 
 def lifespan(app: FastAPI):
     app.state.db = MongoDB()
     # start to load clip model 
     app.state.model = get_model()
+    logger.info("Model loaded")
 
     app.state.db.connect() 
 

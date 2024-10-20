@@ -14,8 +14,9 @@ RUN pip install "fastapi[standard]"
 RUN pip install uvicorn
 EXPOSE 8000
 
+ENV MONOGODB_URL=mongodb://localhost:27017
+ENV ROOT_PATH="/mnt/data2/data_copilot_storage"
 RUN chmod 777 /tmp
 
-CMD ["uvicorn", "main:app", "--reload"]
-
-
+ENTRYPOINT ["uvicorn"]
+CMD ["main:app", "--host", "0.0.0.0", "--reload"]

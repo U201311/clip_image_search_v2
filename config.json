@@ -3,14 +3,10 @@
     "mongodb-port": 9004,
     "mongodb-database": "data_copilot",
     "mongodb-collection": "search_datas",
-    "mongodb-url": "mongodb://10.112.20.37:9004",
 
-    "mongodb-generate-dataset": "",
     "mongodb-username": "admin",
     "mongodb-password": "admin123",
     "mongodb-authsource": "admin",
-
-    "root-path": "/mnt/data2/data_copilot_storage",
 
     "device": "cpu",
     "storage-type": "float32",
