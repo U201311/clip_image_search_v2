@@ -25,6 +25,7 @@ server = SearchServer(collection, model)
 
 
 class SearchImageRequest(BaseModel):
+    dataset_id: int
     path: str
     topn: int = 10
     minimum_width: int = 0
@@ -64,7 +65,7 @@ def search_image(request: SearchImageRequest):
         if request.path is None:
             raise HTTPException(status_code=400, detail="Path is required")
         image = Image.open(request.path)
-        result = server.search_image(image, topn=request.topn, minimum_width=request.minimum_width, minimum_height=request.minimum_height, extension_choice=request.extension_choice)
+        result = server.search_image(image,  request.dataset_id,topn=request.topn, minimum_width=request.minimum_width, minimum_height=request.minimum_height, extension_choice=request.extension_choice)
         return {"success": True, "data": result}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -99,29 +100,15 @@ async def upload_data(workspace_id: int):
         raise HTTPException(status_code=500, detail=str(e))
     
 
-   
-
-
 
 @router.post("/text/")
-def search_text(request: SearchTextRequest):
-    """
-    Search for images based on the text
-
-    """
-    try:
-        result =  server.search_image(request.text, topn=request.topn, minimum_width=request.minimum_width, minimum_height=request.minimum_height, extension_choice=request.extension_choice)
-        return {"success": True, "data": result}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-    
-
 def search_text_by_id(request: SearchTextRequest):
     """
     Search for images based on the text
 
     """
     try:
+        logger.info(f"search_text_by_id: {request.dataset_id}")
         result =  server.search_image(request.text, request.dataset_id, topn=request.topn, minimum_width=request.minimum_width, minimum_height=request.minimum_height, extension_choice=request.extension_choice)
         return {"success": True, "data": result}
     except Exception as e:

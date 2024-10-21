@@ -18,7 +18,7 @@ def find(dataset_id: int):
         cursor = collection.find(query)
         id_list = []
         for doc in cursor:
-            id_list.append(doc["id"])
+            id_list.append(doc["workspace_file_id"])
         return id_list           
 
     except Exception as e:

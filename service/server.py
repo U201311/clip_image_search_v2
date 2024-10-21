@@ -19,7 +19,7 @@ class SearchServer:
     def __init__(self, mongo_collection, model: CLIPModel):
         self.device = settings.device
         self.feat_dim = get_feature_size(settings.clip_model)
-        self.mongo_collection = mongo_collection
+        self.mongo_collection = mongo_collection.get_collection()
         
         self.model = model
         self._MAX_SPLIT_SIZE = 8192
@@ -40,7 +40,7 @@ class SearchServer:
         mongo_query_dict = self._get_search_filter(search_filter_options)
         id_list = dataset_files_service.find(dataset_id)
         if id_list:
-            mongo_query_dict["file_id"] = {"$in": id_list}
+            mongo_query_dict["workspace_file_id"] = {"$in": id_list}
         cursor = self.mongo_collection.find(mongo_query_dict)
         filename_list = []
         feature_list = []
@@ -48,7 +48,8 @@ class SearchServer:
         try:
             for doc in cursor:  
                 feature_list.append(np.frombuffer(doc["feature"], settings.storage_type))
-                filename_list.append(doc["_id"])
+                ## 打印feature_list的长度 
+                filename_list.append(doc["workspace_file_id"])
                 if len(feature_list) >= self._MAX_SPLIT_SIZE:
                     feature_list = np.array(feature_list)
                     sim_score_list.append(cosine_similarity(query_feature, feature_list))
@@ -56,7 +57,6 @@ class SearchServer:
             if len(feature_list) > 0:
                 feature_list = np.array(feature_list)
                 sim_score_list.append(cosine_similarity(query_feature, feature_list))
-
             if len(sim_score_list) == 0:
                 return [], []
             sim_score = np.concatenate(sim_score_list, axis=0)
@@ -95,24 +95,23 @@ class SearchServer:
     def import_image_dir_sync(self, id, filename: str, model: CLIPModel, copy=False):
         logger.info(f"Importing image: {filename}")
         
-        
         image_feature, image_size = model.get_image_feature(filename)
         logger.info(f"Image size: {image_size}")
         if image_feature is None:
             logger.info(f"skip file: {filename}")
             return
-
         # 这里可以添加将图像特征保存到数据库的逻辑
         document = {
-            "file_id": id,
+            "workspace_file_id": id,
             "height": image_size[0],
             "width": image_size[1],
-            "feature": image_feature.tolist(),  # 假设 image_feature 是一个 numpy 数组
+            "feature": image_feature.tobytes(),  
             "status":1,
             "created_time": datetime.now(),
         }
-        self.collection.insert_one(document)
+        self.mongo_collection.insert_one(document)
         logger.info(f"Image imported: {filename}")
+        return id
     
 
     async def import_image_dir(self, id_list, file_path_list, model: CLIPModel, copy=False):
@@ -120,7 +119,7 @@ class SearchServer:
         with ThreadPoolExecutor() as pool:
             tasks = []
             for id, file_path in zip(id_list, file_path_list):
-                file_path = os.path.join(settings.import_image_base, file_path)
+                file_path = os.path.join(settings.root_path, file_path)
                 tasks.append(loop.run_in_executor(pool, self.import_image_dir_sync, id, file_path, model, copy))
             results = await asyncio.gather(*tasks)
         return results

@@ -19,7 +19,7 @@ def find(workspace_id: int):
         id_list = []
         file_path_list = []
         for doc in cursor:
-            id_list.append(doc["_id"])
+            id_list.append(doc["id"])
             file_path_list.append(doc["file_path"])
         return id_list, file_path_list           
 
