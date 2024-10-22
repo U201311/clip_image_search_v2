@@ -23,9 +23,9 @@ class CLIPModel():
             args['download_root'] = self.config.clip_model_download
         return clip.load(self.config.clip_model, device=self.device, **args)
     
-    def get_image_feature(self, image_path):
+    def get_image_feature(self, image: Image.Image):
         try:
-            image = Image.open(image_path)
+            # image = Image.open(image_path)
             image_size = image.size 
             image = self.preprocess(image).unsqueeze(0).to(self.device)
         except Exception as e:

@@ -89,16 +89,21 @@ class SearchServer:
 
         filename_list, score_list = self.search_nearest_clip_feature(target_feature, dataset_id, topn=int(topn), search_filter_options=search_option)
 
-        return filename_list, score_list
+        ### 根据filename_list 获取文件路径
+        # filename_list = [get_full_path(filename) for filename in filename_list]
+        if len(filename_list) == 0:
+            return [], []
+        find_path_list = dataset_files_service.find_path_list(filename_list)
+        return find_path_list, score_list
     
     
-    def import_image_dir_sync(self, id, filename: str, model: CLIPModel, copy=False):
-        logger.info(f"Importing image: {filename}")
+    def import_image_dir_sync(self, id, image: Image.Image, model: CLIPModel, copy=False):
+        logger.info(f"Importing image: {image}")
         
-        image_feature, image_size = model.get_image_feature(filename)
+        image_feature, image_size = model.get_image_feature(image)
         logger.info(f"Image size: {image_size}")
         if image_feature is None:
-            logger.info(f"skip file: {filename}")
+            logger.info(f"skip file: {image}")
             return
         # 这里可以添加将图像特征保存到数据库的逻辑
         document = {
@@ -110,17 +115,17 @@ class SearchServer:
             "created_time": datetime.now(),
         }
         self.mongo_collection.insert_one(document)
-        logger.info(f"Image imported: {filename}")
+        logger.info(f"Image imported: {id}")
         return id
     
 
-    async def import_image_dir(self, id_list, file_path_list, model: CLIPModel, copy=False):
+    async def import_image_dir(self, id_list, base64_str_list, model: CLIPModel, copy=False):
         loop = asyncio.get_event_loop()
         with ThreadPoolExecutor() as pool:
             tasks = []
-            for id, file_path in zip(id_list, file_path_list):
-                file_path = os.path.join(settings.root_path, file_path)
-                tasks.append(loop.run_in_executor(pool, self.import_image_dir_sync, id, file_path, model, copy))
+            for id, base64_str in zip(id_list, base64_str_list):
+                # file_path = os.path.join(settings.root_path, file_path)
+                tasks.append(loop.run_in_executor(pool, self.import_image_dir_sync, id, base64_str, model, copy))
             results = await asyncio.gather(*tasks)
         return results
 
