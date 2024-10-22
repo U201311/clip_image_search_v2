@@ -6,12 +6,17 @@ WORKDIR /app
 COPY . /app
 
 # 安装依赖
-#RUN pip install -i https://pypi.tuna.tsinghua.edu.cn/simple  -r requirments.txt
-#RUN pip install -i https://pypi.tuna.tsinghua.edu.cn/simple pymongo
-RUN pip install  -r requirments.txt
-RUN pip install  pymongo
-RUN pip install "fastapi[standard]"
-RUN pip install uvicorn
+# RUN pip install  -r requirments.txt
+# RUN pip install  pymongo
+# RUN pip install "fastapi[standard]"
+# RUN pip install uvicorn
+RUN pip install --upgrade pip \
+    && pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple \
+    && pip install -r requirments.txt \
+    && pip install pymongo \
+    && pip install "fastapi[standard]" \
+    && pip install uvicorn
+
 EXPOSE 8000
 
 ENV MONOGODB_URL=mongodb://localhost:27017
