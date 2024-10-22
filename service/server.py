@@ -89,12 +89,8 @@ class SearchServer:
 
         filename_list, score_list = self.search_nearest_clip_feature(target_feature, dataset_id, topn=int(topn), search_filter_options=search_option)
 
-        ### 根据filename_list 获取文件路径
-        # filename_list = [get_full_path(filename) for filename in filename_list]
-        if len(filename_list) == 0:
-            return [], []
-        find_path_list = dataset_files_service.find_path_list(filename_list)
-        return find_path_list, score_list
+       
+        return filename_list, score_list
     
     
     def import_image_dir_sync(self, id, image: Image.Image, model: CLIPModel, copy=False):
