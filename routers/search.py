@@ -48,6 +48,12 @@ class ImportResponse(BaseModel):
     score: List[float]
 
 
+class UploadImageRequest(BaseModel):
+    base64_str: str
+    workspace_file_id: int
+
+
+
 @router.post("/image")
 def search_image(request: SearchImageRequest):
     """
@@ -121,10 +127,6 @@ def search_text_by_id(request: SearchTextRequest):
         raise HTTPException(status_code=500, detail=str(e)) 
 
 
-class UploadImageRequest(BaseModel):
-    base64_str: str
-    workspace_file_id: int
-
 
 @router.post("/upload")
 def upload_single_image(request: UploadImageRequest):
@@ -132,8 +134,9 @@ def upload_single_image(request: UploadImageRequest):
     Upload a single image to the database
 
     """
-    try:
-        result = server.import_image_dir_sync(request.workspace_file_id, request.base64_str, model, copy=False)
+    try:        
+        image = base64_to_image(request.base64_str)
+        result = server.import_image_dir_sync(request.workspace_file_id, image, model, copy=False)
         if result is None:
             raise HTTPException(status_code=500, detail="Error uploading image")
         return {"success": True}
